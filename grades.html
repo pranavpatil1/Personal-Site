@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- A tool applicable to most high school studentsc-->
+		<title>Final Grade Calculator</title>
+		<!-- Take a pretty nice font from Google (thanks) -->
+		<link href="https://fonts.googleapis.com/css?family=Dosis" rel="stylesheet">
+		<style>
+			body {
+			    /* why the hate for beige??? */
+				background-color:beige;
+				/* that font imported earlier */
+				font-family: 'Dosis', sans-serif;
+				text-align: center;
+			}
+			#categories {
+			    /* darken table regardless of bkgrd */
+				background-color: rgba(0, 0, 0, 0.1);
+				width: 500px;
+				text-align: center;
+				margin-left: auto;
+				margin-right: auto;
+			}
+			input {
+				width: 75px;
+			}
+			button {
+				font-family: monospace;
+				border: none;
+				background-color: #555;
+				border-radius: 3px;
+				color: white;
+			}
+			#calc {
+				font-family: 'Dosis', sans-serif;
+			}
+		</style>
+		<script>
+			var count = 1;
+			function addSlot() {
+				// boom add to global counter (OOF)
+				count ++;
+				
+				// get the main table
+                var table = document.getElementById("categories");
+                
+                // create a row at the end (save row reference)
+                var row = table.insertRow(-1);
+                
+                // insert cells and save references
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                var cell5 = row.insertCell(4);
+                
+                // add HTML input code to each cell
+				// these are REFERENCES and we are using the SETTER
+				// therefore this code will ACTUALLY change the cell!
+                cell1.innerHTML = count;
+                cell2.innerHTML = '<input class="points" type="number">';
+                cell3.innerHTML = '<input class="possible" type="number">';
+                cell4.innerHTML = '<input class="weight" type="number">';
+                cell5.innerHTML = '<input class="final" type="radio" name="selected">';
+			}
+			function remSlot() {
+				// find the table we want
+				var tbl = document.getElementById("categories");
+				// count represents number of actual content
+				// not number of rows (including <th>)
+				if (count > 0) {
+					// access the tbody child node (2nd in list)
+					// then delete the last row
+					tbl.childNodes[1].deleteRow(-1);
+					count --;
+				}
+			}
+			function calculate() {
+				// find the table
+				var table = document.getElementById("categories");
+				// grade starts at 0
+				var grade = 0;
+				// grade w/ final
+				var finGrade = 0;
+				// the category which the final goes into
+				var finalCtg;
+				// string to hold output
+				var result;
+				// sums all the weights in case they dont add to 100
+				var totalWeight = 0;
+				// loop through rows (disregard header row at 0 index)
+				for (var i = 1, row; row = table.rows[i]; i++) {
+					// using Number() to convert string to num
+					// empty string will become 0
+					var weight = +(row.cells[3].childNodes.item(0).value);
+					var points = +(row.cells[1].childNodes.item(0).value);
+					var possible = +(row.cells[2].childNodes.item(0).value);
+					var checked = row.cells[4].childNodes.item(0).checked;
+					
+					// 0 or negative possible points will be ignored
+					if (possible > 0) {
+						grade += weight * points / possible;
+						totalWeight += weight;
+					}
+					// boom this is the row for final
+					if (checked)
+						finalCtg = row;
+				}
+				
+				var finalPoints = +(document.getElementById("final").value);
+				// empty string to show user (populate later)
+				result = "";
+				// if grade is not a number, SOMETHING WENT WRONG
+				if (isNaN(grade)) {
+					result += "Bad input. Fill in all the blanks!"
+				} else {
+					if (isNaN(finalPoints) || finalPoints < 0) {
+						result += "Enter the points for final below the table.";
+					} else {
+						// give a warning (may be an accident)
+						if (totalWeight != 100)
+							result += "WARNING: Total weight is not equal to 100<br>";
+						// add a newline
+						result += "<br>";
+						// convert grade to percent and keep first 4 chars
+						result += "Initial grade: " + (grade * 100 / totalWeight).toString().substring(0, 5) + "%<br>";
+						
+						var weight = +(finalCtg.cells[3].childNodes.item(0).value);
+						var points = +(finalCtg.cells[1].childNodes.item(0).value);
+						var possible = +(finalCtg.cells[2].childNodes.item(0).value);
+						var checked = finalCtg.cells[4].childNodes.item(0).checked;
+						
+						finGrade = grade - weight * points / possible;
+						
+						// best score, 100 on final
+						var maxScore = (100 * (finGrade + weight * (points + finalPoints) / (possible + finalPoints))/totalWeight);
+						// worst score, 0 on final
+						var minScore = (100 * (finGrade + weight * points / (possible + finalPoints))/totalWeight);			result += "Final is worth " + (maxScore - minScore).toString().substring(0, 5) + "%<br>";
+						
+						// shows worst and best scores
+						result += "100% on final: " + maxScore.toString().substring(0, 5) + "%<br>";
+						result += "0% on final: " + minScore.toString().substring(0, 5) + "%<br>";
+						
+						result += "<br>";
+						var grades = [90, 80, 70];
+						for (var i = 0; i < grades.length; i ++) {
+							var score = 100*(grades[i] - minScore)/(maxScore - minScore);
+							result += "To get " + grades[i] + "%, you need " + score.toString().substring(0, 5) + "% or " + (score*finalPoints/100).toString().substring(0, 5) + "/" + finalPoints + "<br>";
+						}
+					}
+				}
+				// set the result <p> to the string
+				document.getElementById("result").innerHTML = result;
+			}
+		</script>
+	</head>
+	<body>
+		<h1>Final Grade Calculator</h1>
+		<p>For students, this helps you determine what score you need to get on your final.<br>For teachers, this answers the question "How much is the final worth?"</p>
+		<p>Make sure to select which category the final is in. If it gets its own category, set points possible to 0 (or leave blank).</p>
+		
+		<table id="categories">
+			<tr>
+				<th>Category</th>
+				<th>Points</th>
+				<th>Points possible</th>
+				<th>Weight (%)</th>
+				<th>Final?</th>
+			</tr>
+			<tr id="r1">
+				<td>1</td>
+				<td><input class="points" type="number"></td>
+				<td><input class="possible" type="number"></td>
+				<td><input class="weight" type="number"></td>
+				<td><input class="final" type="radio" name="selected" checked></td>
+			</tr>
+		</table>
+		<br>
+		Add category: <button onclick="addSlot()">+</button>  <button onclick="remSlot()">-</button>
+		<br>
+		Possible points for final: <input id="final" type="number">
+		
+		<br>
+		<br>
+		
+		<button id="calc" onclick="calculate()">CALCULATE!</button>
+		
+		<p id="result"></p>
+		
+	</body>
+</html>
